@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="สุ่มบะหมี่เกี๊ยว กำหนดงบได้">
+<title>สุ่มหมี่ป๊อก</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Sriracha&display=swap">
+<style>
+/* Layout: one yellow menu board on a blue gingham tablecloth; reels as rows, order slip below, sticky spin button. */
+:root{
+  --bg:#e8eff9;
+  --check:rgba(47,107,191,.15);
+  --page-fg:#1d2747;
+  --board:#f5c33b;
+  --pill:#efb46a;
+  --ink:#1d2747;
+  --ink-soft:#6a531c;
+  --navy:#1b2a55;
+  --on-navy:#fdf7e6;
+  --chili:#d3302a;
+  --chili-deep:#9e1f1a;
+  --on-chili:#fffaf2;
+  --paper:#fffaf0;
+  --rule:#d8c9a6;
+  --reel:#fffdf6;
+  --f-display:"Mitr","IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-hand:"Sriracha","Mitr",cursive;
+  --row:60px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1629;--check:rgba(96,142,214,.12);--page-fg:#dfe6f5;
+    --board:#e2ad2e;--pill:#d99e55;--ink:#1a2240;--ink-soft:#5a4414;
+    --navy:#152150;--on-navy:#fdf3d8;--chili:#d9392f;--chili-deep:#8a1a15;
+    --paper:#f8f0dc;--rule:#cdb98c;--reel:#fbf4e2;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1629;--check:rgba(96,142,214,.12);--page-fg:#dfe6f5;
+  --board:#e2ad2e;--pill:#d99e55;--ink:#1a2240;--ink-soft:#5a4414;
+  --navy:#152150;--on-navy:#fdf3d8;--chili:#d9392f;--chili-deep:#8a1a15;
+  --paper:#f8f0dc;--rule:#cdb98c;--reel:#fbf4e2;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(90deg,var(--check) 50%,transparent 50%),
+    linear-gradient(var(--check) 50%,transparent 50%);
+  background-size:32px 32px;
+  color:var(--page-fg);
+  font-family:var(--f-body);
+  font-size:15px;line-height:1.55;
+}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:flex;flex-direction:column;gap:14px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+
+.board{background:var(--board);color:var(--ink);border-radius:22px;padding:18px;box-shadow:0 2px 0 rgba(0,0,0,.08),0 14px 30px -16px rgba(20,30,60,.45);display:flex;flex-direction:column;gap:16px}
+
+/* header */
+.head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.oval{background:var(--navy);color:var(--on-navy);border-radius:999px;padding:8px 26px 10px;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.oval .hand{font-family:var(--f-hand);color:var(--board);font-size:17px;transform:rotate(-3deg)}
+.oval h1{font-family:var(--f-display);font-weight:600;font-size:28px;margin:0;letter-spacing:.01em}
+.rules{font-size:13px;color:var(--ink-soft);margin:0;flex:1;min-width:160px;text-wrap:balance}
+.rules b{color:var(--ink);font-weight:600}
+
+.pill{display:inline-block;background:var(--pill);border-radius:999px;padding:2px 14px;font-family:var(--f-display);font-weight:500;font-size:15px;color:var(--ink)}
+
+/* reels */
+.reels{display:flex;flex-direction:column;gap:10px}
+.reel{display:grid;grid-template-columns:58px minmax(0,1fr) 46px;gap:10px;align-items:center}
+.reel .pill{text-align:center;padding:2px 0}
+.window{position:relative;height:var(--row);background:var(--reel);border:2.5px solid var(--ink);border-radius:14px;overflow:hidden;min-width:0}
+.window::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 10px 10px -8px rgba(0,0,0,.25),inset 0 -10px 10px -8px rgba(0,0,0,.25);border-radius:inherit}
+.strip{will-change:transform}
+.item{height:var(--row);display:flex;align-items:center;justify-content:center;padding-inline:10px;font-family:var(--f-display);font-weight:500;font-size:clamp(17px,4.8vw,23px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.spinning .item{filter:blur(.6px)}
+.hold{width:46px;height:46px;border-radius:50%;border:2.5px solid var(--ink);background:transparent;display:grid;place-items:center;color:var(--ink);transition:background .15s,color .15s}
+.hold svg{width:20px;height:20px}
+.hold[aria-pressed="true"]{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.hold:disabled{opacity:.5;cursor:default}
+.hold-hint{font-size:12.5px;color:var(--ink-soft);margin:-4px 0 0;text-align:right}
+
+/* slip */
+.slip{background:var(--paper);border-radius:12px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;position:relative;
+  -webkit-mask:radial-gradient(circle 7px at 0 50%,transparent 6.5px,#000 7px) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,transparent 6.5px,#000 7px) right/51% 100% no-repeat;
+          mask:radial-gradient(circle 7px at 0 50%,transparent 6.5px,#000 7px) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,transparent 6.5px,#000 7px) right/51% 100% no-repeat}
+.slip-main{min-width:0;display:flex;flex-direction:column;gap:8px}
+.order{font-family:var(--f-display);font-weight:500;font-size:18px;line-height:1.35;margin:0;text-wrap:balance}
+.lines{margin:0;padding:8px 0 0;border-top:1.5px dashed var(--rule);display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:14px;font-variant-numeric:tabular-nums}
+.lines dt{color:var(--ink-soft)}
+.lines dd{margin:0;text-align:right;font-weight:500}
+.badge{width:92px;height:92px;border-radius:50%;background:var(--chili);color:var(--on-chili);display:grid;place-items:center;font-family:var(--f-hand);font-size:32px;line-height:1;box-shadow:inset 0 0 0 3px var(--paper),inset 0 0 0 5px var(--chili-deep);transform:rotate(-8deg);font-variant-numeric:tabular-nums}
+.badge small{display:block;font-family:var(--f-body);font-size:11px;letter-spacing:.06em;text-align:center;margin-top:-2px}
+.badge.stamp{animation:stamp .42s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes stamp{0%{transform:rotate(-20deg) scale(1.6);opacity:0}100%{transform:rotate(-8deg) scale(1);opacity:1}}
+.slip-actions{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ghost{background:transparent;border:1.5px solid var(--ink);border-radius:999px;padding:4px 14px;font-size:13.5px;font-weight:500}
+.msg{font-size:14px;color:var(--chili-deep);font-weight:600;margin:0}
+.msg:empty{display:none}
+
+/* controls */
+.ctrl{display:flex;flex-direction:column;gap:8px}
+.budget-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.money{display:flex;align-items:center;background:var(--reel);border:2.5px solid var(--ink);border-radius:12px;padding:0 12px;height:48px;width:150px}
+.money input{border:0;background:transparent;font-family:var(--f-display);font-size:22px;width:100%;min-width:0;color:var(--ink);font-variant-numeric:tabular-nums}
+.money input:focus{outline:none}
+.money:focus-within{outline:3px solid var(--navy);outline-offset:2px}
+.money input::placeholder{color:var(--ink-soft);opacity:.7;font-size:17px}
+.money span{font-family:var(--f-display);color:var(--ink-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--ink);background:transparent;border-radius:999px;padding:3px 12px;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--board)}
+.seg{display:flex;border:2px solid var(--ink);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;padding:8px 6px;font-weight:500;font-size:14.5px}
+.seg button+button{border-left:2px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--board)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+
+/* spin */
+.spinbar{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5}
+.spin{width:100%;border:0;border-radius:18px;background:var(--chili);color:var(--on-chili);padding:12px 16px 14px;box-shadow:0 6px 0 var(--chili-deep),0 14px 24px -10px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;gap:0;transition:transform .08s,box-shadow .08s}
+.spin:active{transform:translateY(4px);box-shadow:0 2px 0 var(--chili-deep),0 8px 16px -10px rgba(0,0,0,.5)}
+.spin strong{font-family:var(--f-display);font-weight:600;font-size:26px;line-height:1.2}
+.spin span{font-size:13px;opacity:.9;font-variant-numeric:tabular-nums}
+.spin[aria-busy="true"]{filter:saturate(.7)}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+/* exclusions + history */
+details.board{gap:0}
+details.board[open]{gap:14px}
+summary{cursor:pointer;font-family:var(--f-display);font-weight:500;font-size:17px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:24px;line-height:1}
+details[open] summary::after{content:"–"}
+summary small{font-family:var(--f-body);font-size:13px;color:var(--ink-soft);font-weight:400}
+.offgroup{display:flex;flex-direction:column;gap:6px}
+.chip.off{text-decoration:line-through;opacity:.55;border-style:dashed}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.hist li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1.5px dashed rgba(29,39,71,.25);font-size:14px}
+.hist li:last-child{border-bottom:0}
+.hist li span:last-child{font-family:var(--f-hand);font-size:17px;color:var(--chili-deep);white-space:nowrap;font-variant-numeric:tabular-nums}
+.empty{font-size:14px;color:var(--ink-soft);margin:0}
+.foot{font-size:12.5px;text-align:center;opacity:.75;margin:4px 0 0}
+
+@media (prefers-reduced-motion:reduce){
+  .badge.stamp,.shake{animation:none}
+  .strip{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <section class="board" aria-label="ตู้สุ่ม">
+    <div class="head">
+      <div class="oval"><span class="hand">วันนี้กินอะไรดี</span><h1>สุ่มหมี่ป๊อก</h1></div>
+      <p class="rules"><b>ธรรมดา 35</b> · พิเศษ 40–70 · หมูรวม +5 · ไข่ฟองละ 5 · 2 ก้อน+เกี๊ยว 45 · 3 ก้อน+เกี๊ยว 50</p>
+    </div>
+
+    <div class="reels" id="reels"></div>
+    <p class="hold-hint">กดรูปกุญแจเพื่อล็อกช่องที่ชอบไว้ แล้วสุ่มเฉพาะช่องที่เหลือ</p>
+
+    <div class="slip" id="slip" aria-live="polite">
+      <div class="slip-main">
+        <p class="order" id="order">…</p>
+        <dl class="lines" id="lines"></dl>
+      </div>
+      <div class="badge" id="badge">–</div>
+      <div class="slip-actions">
+        <button class="ghost" id="copy" type="button">คัดลอกออเดอร์</button>
+        <p class="msg" id="msg" role="status"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="board ctrl-board" aria-label="ตั้งค่า">
+    <div class="ctrl">
+      <span><span class="pill">งบไม่เกิน</span></span>
+      <div class="budget-row">
+        <label class="money" for="budget"><input id="budget" type="number" inputmode="numeric" min="0" step="5" placeholder="ไม่จำกัด" aria-label="งบสูงสุด (บาท)"><span>บาท</span></label>
+        <div class="chips" id="bchips"></div>
+      </div>
+    </div>
+    <div class="two">
+      <div class="ctrl">
+        <span><span class="pill">ขนาด</span></span>
+        <div class="seg" id="size" role="group" aria-label="ขนาด">
+          <button type="button" data-v="normal">ธรรมดา</button>
+          <button type="button" data-v="any">สุ่ม</button>
+          <button type="button" data-v="special">พิเศษ</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <span><span class="pill">ไข่</span></span>
+        <div class="seg" id="egg" role="group" aria-label="ไข่">
+          <button type="button" data-v="no">ไม่ใส่</button>
+          <button type="button" data-v="any">สุ่ม</button>
+          <button type="button" data-v="yes">ใส่</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="spinbar">
+    <button class="spin" id="spin" type="button"><strong>สุ่มเลย!</strong><span id="count">…</span></button>
+  </div>
+
+  <details class="board" id="offbox">
+    <summary><span>ไม่กินอะไร กดตัดออก <small id="offcount"></small></span></summary>
+    <div class="offgroup"><span><span class="pill">เส้น</span></span><div class="chips" id="off-noodle"></div></div>
+    <div class="offgroup"><span><span class="pill">หมู</span></span><div class="chips" id="off-pork"></div></div>
+    <div class="offgroup"><span><span class="pill">น้ำซุป</span></span><div class="chips" id="off-soup"></div></div>
+  </details>
+
+  <section class="board" aria-label="ประวัติ">
+    <span><span class="pill">ที่สุ่มมาแล้ว</span></span>
+    <ul class="hist" id="hist"></ul>
+    <p class="empty" id="histEmpty">ยังไม่ได้สุ่ม ลองกดปุ่มแดงดู</p>
+  </section>
+
+  <p class="foot">ราคาตามป้ายเมนูหน้าร้าน ถ้าร้านปรับราคาเมื่อไหร่ ให้ถือราคาที่ร้านเป็นหลัก</p>
+</div>
+
+<script>
+(() => {
+  const NORMAL = 35, EGG = 5, TIERS = [40, 45, 50, 55, 60, 70];
+  const NOODLES = [
+    {n:"บะหมี่"},{n:"บะหมี่เส้นแบน"},{n:"บะหมี่หยก"},{n:"เส้นเล็ก"},{n:"เส้นหมี่ขาว"},{n:"เส้นใหญ่"},
+    {n:"มาม่า"},{n:"วุ้นเส้น"},{n:"เกี๊ยว"},
+    {n:"บะหมี่เกี๊ยว"},{n:"บะหมี่แบนเกี๊ยว"},{n:"บะหมี่หยกเกี๊ยว"},{n:"เส้นเล็กเกี๊ยว"},
+    {n:"เส้นหมี่ขาวเกี๊ยว"},{n:"เส้นใหญ่เกี๊ยว"},{n:"มาม่าเกี๊ยว"},{n:"วุ้นเส้นเกี๊ยว"},
+    {n:"บะหมี่ 2 ก้อน + เกี๊ยว", fixed:45},
+    {n:"บะหมี่ 3 ก้อน + เกี๊ยว", fixed:50},
+    {n:"เกาเหลา (ไม่ใส่เส้น)", fixed:40},
+  ];
+  const PORK = [{n:"หมูแดง",add:0},{n:"หมูกรอบ",add:0},{n:"หมูเด้ง",add:0},{n:"หมูหมัก",add:0},{n:"ลูกชิ้นหมู",add:0},{n:"หมูรวม",add:5}];
+  const SOUP = [{n:"น้ำใส"},{n:"ต้มยำ"},{n:"แห้งราดน้ำหมูแดง"},{n:"แห้งซีอิ๊วดำ"},{n:"แห้งต้มยำ"}];
+  const REELS = [
+    {key:"noodle", label:"เส้น", list:NOODLES},
+    {key:"pork", label:"หมู", list:PORK},
+    {key:"soup", label:"น้ำ", list:SOUP},
+  ];
+  const BUDGET_CHIPS = [null, 35, 40, 45, 50, 60, 70];
+
+  const store = {
+    get(k, d){ try { const v = localStorage.getItem("mheepok:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v){ try { localStorage.setItem("mheepok:" + k, JSON.stringify(v)); } catch {} },
+  };
+
+  const state = {
+    budget: store.get("budget", null),
+    size: store.get("size", "any"),
+    egg: store.get("egg", "any"),
+    off: new Set(store.get("off", [])),
+    hold: {noodle:false, pork:false, soup:false},
+    cur: null,
+    spinning: false,
+    history: store.get("history", []),
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- pricing ---------- */
+  function bases(noodle){
+    if (noodle.fixed) return [{kind:"set", label:"ราคาชุด", price:noodle.fixed}];
+    const normal = {kind:"normal", label:"ธรรมดา", price:NORMAL};
+    const specials = TIERS.map(p => ({kind:"special", label:"พิเศษ " + p, price:p}));
+    if (state.size === "normal") return [normal];
+    if (state.size === "special") return specials;
+    return [normal, ...specials];
+  }
+  const eggOpts = () => state.egg === "no" ? [0] : state.egg === "yes" ? [1] : [0, 1];
+  const minOf = (arr) => Math.min(...arr);
+
+  function pool(key){
+    const reel = REELS.find(r => r.key === key);
+    if (state.hold[key] && state.cur) return [state.cur[key]];
+    return reel.list.filter(x => !state.off.has(key + ":" + x.n));
+  }
+
+  function roll(){
+    const B = state.budget ?? Infinity;
+    const N = pool("noodle"), P = pool("pork"), S = pool("soup");
+    if (!N.length) return {err:"ตัดเส้นออกหมดแล้ว เปิดคืนอย่างน้อย 1 อย่าง"};
+    if (!P.length) return {err:"ตัดหมูออกหมดแล้ว เปิดคืนอย่างน้อย 1 อย่าง"};
+    if (!S.length) return {err:"ตัดน้ำซุปออกหมดแล้ว เปิดคืนอย่างน้อย 1 อย่าง"};
+    const eggMin = minOf(eggOpts()) * EGG;
+    const porkMin = minOf(P.map(p => p.add));
+    const baseMin = (n) => minOf(bases(n).map(b => b.price));
+
+    const okN = N.filter(n => baseMin(n) + porkMin + eggMin <= B);
+    if (!okN.length){
+      const cheapest = minOf(N.map(n => baseMin(n))) + porkMin + eggMin;
+      const held = Object.values(state.hold).some(Boolean) ? " (รวมช่องที่ล็อกไว้)" : "";
+      return {err:`งบ ${B} บาทยังไม่พอ ชามที่ถูกสุดตอนนี้ ${cheapest} บาท${held}`};
+    }
+    const noodle = pick(okN);
+    const pork = pick(P.filter(p => baseMin(noodle) + p.add + eggMin <= B));
+    const soup = pick(S);
+
+    const okB = bases(noodle).filter(b => b.price + pork.add + eggMin <= B);
+    let base;
+    const normal = okB.find(b => b.kind === "normal");
+    const specials = okB.filter(b => b.kind === "special");
+    if (normal && specials.length) base = Math.random() < .5 ? normal : pick(specials);
+    else base = pick(okB);
+
+    const egg = pick(eggOpts().filter(e => base.price + pork.add + e * EGG <= B));
+    return {noodle, pork, soup, base, egg, total: base.price + pork.add + egg * EGG};
+  }
+
+  function countCombos(){
+    const B = state.budget ?? Infinity;
+    const N = pool("noodle"), P = pool("pork"), S = pool("soup"), E = eggOpts();
+    let c = 0;
+    for (const n of N) for (const p of P) for (const b of bases(n)) for (const e of E)
+      if (b.price + p.add + e * EGG <= B) c += S.length;
+    return c;
+  }
+
+  /* ---------- reels ---------- */
+  const lockSvg = (open) => open
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 7.6-1.7"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>';
+
+  const reelEls = {};
+  for (const r of REELS){
+    const row = document.createElement("div");
+    row.className = "reel";
+    row.innerHTML = `<span class="pill">${r.label}</span><div class="window"><div class="strip"></div></div><button class="hold" type="button" aria-pressed="false" aria-label="ล็อก${r.label}">${lockSvg(true)}</button>`;
+    $("reels").appendChild(row);
+    const hold = row.querySelector(".hold");
+    hold.addEventListener("click", () => {
+      if (state.spinning || !state.cur) return;
+      state.hold[r.key] = !state.hold[r.key];
+      hold.setAttribute("aria-pressed", state.hold[r.key]);
+      hold.innerHTML = lockSvg(!state.hold[r.key]);
+      updateCount();
+    });
+    reelEls[r.key] = {win: row.querySelector(".window"), strip: row.querySelector(".strip"), hold};
+  }
+
+  function itemEl(text){
+    const d = document.createElement("div");
+    d.className = "item"; d.textContent = text;
+    return d;
+  }
+  function setStatic(key, text){
+    const s = reelEls[key].strip;
+    s.style.transition = "none"; s.style.transform = "none";
+    s.replaceChildren(itemEl(text));
+  }
+  function spinReel(key, from, to, names, ms, extra){
+    const {strip, win} = reelEls[key];
+    if (ms <= 0){ setStatic(key, to); return Promise.resolve(); }
+    const fillers = Array.from({length: 12 + extra}, () => pick(names));
+    const seq = [from, ...fillers, to, pick(names)];
+    strip.replaceChildren(...seq.map(itemEl));
+    const h = strip.firstElementChild.offsetHeight;
+    strip.style.transition = "none";
+    strip.style.transform = "translateY(0)";
+    void strip.offsetHeight;
+    strip.style.transition = `transform ${ms}ms cubic-bezier(.18,.75,.22,1.06)`;
+    strip.style.transform = `translateY(${-(seq.length - 2) * h}px)`;
+    win.classList.add("spinning");
+    return new Promise(res => setTimeout(() => {
+      win.classList.remove("spinning");
+      setStatic(key, to);
+      res();
+    }, ms + 40));
+  }
+
+  /* ---------- slip ---------- */
+  function orderText(c){
+    const size = c.base.kind === "special" ? ` พิเศษ ${c.base.price}` : c.base.kind === "normal" ? " ธรรมดา" : "";
+    return `${c.noodle.n} ${c.pork.n} ${c.soup.n}${size}${c.egg ? " ใส่ไข่" : ""}`;
+  }
+  function renderSlip(c, animate){
+    $("order").textContent = orderText(c);
+    const rows = [[c.base.kind === "set" ? c.noodle.n : c.base.label, c.base.price]];
+    if (c.pork.add) rows.push([`${c.pork.n} เพิ่ม`, "+" + c.pork.add]);
+    if (c.egg) rows.push([`ไข่ ${c.egg} ฟอง`, "+" + c.egg * EGG]);
+    $("lines").replaceChildren(...rows.flatMap(([k, v]) => {
+      const dt = document.createElement("dt"); dt.textContent = k;
+      const dd = document.createElement("dd"); dd.textContent = v;
+      return [dt, dd];
+    }));
+    const b = $("badge");
+    b.innerHTML = `<div>${c.total}.-<small>บาท</small></div>`;
+    if (animate){ b.classList.remove("stamp"); void b.offsetWidth; b.classList.add("stamp"); }
+  }
+
+  /* ---------- history ---------- */
+  function renderHistory(){
+    const ul = $("hist");
+    ul.replaceChildren(...state.history.map(h => {
+      const li = document.createElement("li");
+      const a = document.createElement("span"); a.textContent = h.t;
+      const p = document.createElement("span"); p.textContent = h.p + ".-";
+      li.append(a, p);
+      return li;
+    }));
+    $("histEmpty").hidden = state.history.length > 0;
+  }
+
+  /* ---------- controls ---------- */
+  function setMsg(t){ $("msg").textContent = t || ""; }
+  function updateCount(){
+    const n = countCombos();
+    $("count").textContent = n ? `สุ่มจาก ${n.toLocaleString("th-TH")} แบบที่ไม่เกินงบ` : "ไม่มีแบบที่เข้าเงื่อนไข";
+  }
+
+  const budgetInput = $("budget");
+  if (state.budget != null) budgetInput.value = state.budget;
+  for (const v of BUDGET_CHIPS){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.dataset.v = v ?? "";
+    b.textContent = v == null ? "ไม่จำกัด" : v;
+    b.addEventListener("click", () => { budgetInput.value = v ?? ""; onBudget(); });
+    $("bchips").appendChild(b);
+  }
+  function syncBudgetChips(){
+    for (const c of $("bchips").children)
+      c.setAttribute("aria-pressed", String((c.dataset.v === "" ? null : +c.dataset.v) === state.budget));
+  }
+  function onBudget(){
+    const v = parseInt(budgetInput.value, 10);
+    state.budget = Number.isFinite(v) && v > 0 ? v : null;
+    store.set("budget", state.budget);
+    syncBudgetChips(); updateCount(); setMsg("");
+  }
+  budgetInput.addEventListener("input", onBudget);
+
+  function bindSeg(id, key){
+    const g = $(id);
+    const sync = () => { for (const b of g.children) b.setAttribute("aria-pressed", String(b.dataset.v === state[key])); };
+    g.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      state[key] = b.dataset.v; store.set(key, state[key]);
+      sync(); updateCount(); setMsg("");
+    });
+    sync();
+  }
+  bindSeg("size", "size");
+  bindSeg("egg", "egg");
+
+  function buildOff(){
+    for (const r of REELS){
+      const box = $("off-" + r.key);
+      for (const x of r.list){
+        const id = r.key + ":" + x.n;
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "chip";
+        b.textContent = x.n + (x.fixed ? ` (${x.fixed})` : x.add ? ` (+${x.add})` : "");
+        const sync = () => { b.classList.toggle("off", state.off.has(id)); b.setAttribute("aria-pressed", String(!state.off.has(id))); };
+        b.addEventListener("click", () => {
+          state.off.has(id) ? state.off.delete(id) : state.off.add(id);
+          store.set("off", [...state.off]); sync(); syncOffCount(); updateCount(); setMsg("");
+        });
+        sync();
+        box.appendChild(b);
+      }
+    }
+    syncOffCount();
+  }
+  function syncOffCount(){ $("offcount").textContent = state.off.size ? `· ตัดออก ${state.off.size} อย่าง` : ""; }
+  buildOff();
+
+  /* ---------- spin ---------- */
+  const spinBtn = $("spin");
+  async function spin(){
+    if (state.spinning) return;
+    const r = roll();
+    if (r.err){
+      setMsg(r.err);
+      spinBtn.classList.remove("shake"); void spinBtn.offsetWidth; spinBtn.classList.add("shake");
+      return;
+    }
+    setMsg("");
+    state.spinning = true;
+    spinBtn.setAttribute("aria-busy", "true");
+    for (const k in reelEls) reelEls[k].hold.disabled = true;
+    const prev = state.cur;
+    $("badge").textContent = "?";
+    $("order").textContent = "กำลังสุ่ม…";
+    $("lines").replaceChildren();
+
+    const durations = reduced ? [0, 0, 0] : [1100, 1500, 1900];
+    await Promise.all(REELS.map((reel, i) => {
+      if (state.hold[reel.key]) return Promise.resolve();
+      const names = pool(reel.key).map(x => x.n);
+      return spinReel(reel.key, prev ? prev[reel.key].n : names[0], r[reel.key].n, names.length > 1 ? names : reel.list.map(x => x.n), durations[i], i * 4);
+    }));
+
+    state.cur = r;
+    renderSlip(r, true);
+    state.history.unshift({t: orderText(r), p: r.total});
+    state.history = state.history.slice(0, 8);
+    store.set("history", state.history);
+    renderHistory();
+
+    state.spinning = false;
+    spinBtn.removeAttribute("aria-busy");
+    for (const k in reelEls) reelEls[k].hold.disabled = false;
+    updateCount();
+  }
+  spinBtn.addEventListener("click", spin);
+
+  $("copy").addEventListener("click", async () => {
+    if (!state.cur) return;
+    const text = `${orderText(state.cur)} = ${state.cur.total} บาท`;
+    const btn = $("copy");
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = "คัดลอกแล้ว";
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents($("order"));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      btn.textContent = "เลือกข้อความไว้แล้ว กดคัดลอกเองได้เลย";
+    }
+    setTimeout(() => { btn.textContent = "คัดลอกออเดอร์"; }, 1800);
+  });
+
+  /* ---------- first frame: a ready-made bowl ---------- */
+  syncBudgetChips();
+  let first = roll();
+  if (first.err){
+    setMsg(first.err);
+    const saved = {budget: state.budget}; state.budget = null;
+    first = roll(); state.budget = saved.budget;
+  }
+  if (!first.err){
+    state.cur = first;
+    for (const r of REELS) setStatic(r.key, first[r.key].n);
+    renderSlip(first, false);
+  }
+  renderHistory();
+  updateCount();
+})();
+</script>
+</body>
+</html>
